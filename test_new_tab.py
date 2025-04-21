@@ -1,6 +1,5 @@
 # URL = https://qaplayground.dev/apps/new-tab/
-# In this task there's a menu, one bar of which is a dropdown menu with more layers
-# Aim: Test all elements of the dropdown menu without overloading the code
+# In this task there's a button that leads to a new page, that's opened in a new tab
 
 # Test cases plan:
 # 1. Button is clickable
@@ -122,8 +121,6 @@ def test_button_has_target_attribute_with_right_assigned_parameter(driver, assig
     assert target_value == assigned_parameter, f'Expected target={assigned_parameter}, but got {target_value}'
 
 def test_button_opens_only_one_new_tab(driver):
-    old_window = driver.current_window_handle
-
     driver.find_element(By.XPATH, ".//div[@class='flex-center']/a").click()
 
     WebDriverWait(driver, 10).until(lambda d: len(d.window_handles) > 1)
