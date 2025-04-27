@@ -27,18 +27,32 @@ from selenium.webdriver.chrome.options import Options
 import pytest
 import requests
 
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
 
 BASE_URL = "https://qaplayground.dev/apps/popup/"
 OPEN_BUTTON_XPATH = ".//div[@class='flex-center']/a"
 SUBMIT_BUTTON_XPATH = './/div/button'
 
-@pytest.fixture
-def driver():
-    options = Options()
-    options.add_argument("--start-maximized")  
+@pytest.fixture(params=["chrome", "firefox"])
+def driver(request):
+    browser = request.param
+    
+    if browser == "chrome":
+        options = ChromeOptions()
+        options.add_argument("--start-maximized")
+        driver = webdriver.Chrome(options=options)
+    
+    elif browser == "firefox":
+        options = FirefoxOptions()
+        options.add_argument("--start-maximized")
+        driver = webdriver.Firefox(options=options)
+    
+    else:
+        raise Exception(f"Unsupported browser: {browser}")
 
-    driver = webdriver.Chrome(options=options)  
-    driver.get(BASE_URL)
+    driver.get("https://qaplayground.dev/apps/popup/")
+
     yield driver
     driver.quit()
 
