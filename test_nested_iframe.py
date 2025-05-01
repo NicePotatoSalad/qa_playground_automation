@@ -33,8 +33,8 @@ from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 
 BASE_URL = "https://qaplayground.dev/apps/iframe/"
-OPEN_BUTTON_XPATH = ".//div[@class='flex-center']/a"
-SUBMIT_BUTTON_XPATH = './/div/button'
+FIRST_IFRAME_XPATH = './/iframe[@src="iframe1.html"]'
+SECOND_IFRAME_XPATH = './/iframe[@src="iframe2.html"]'
 
 @pytest.fixture(params=["chrome", "firefox"])
 def driver(request) -> webdriver.Chrome | webdriver.Firefox: # type: ignore
@@ -43,11 +43,13 @@ def driver(request) -> webdriver.Chrome | webdriver.Firefox: # type: ignore
     if browser == "chrome":
         options = ChromeOptions()
         options.add_argument("--start-maximized")
+        options.add_argument("--headless")
         driver = webdriver.Chrome(options=options)
 
     elif browser == "firefox":
         options = FirefoxOptions()
         options.add_argument("--start-maximized")
+        options.add_argument("--headless")
         driver = webdriver.Firefox(options=options)
 
     else:
@@ -64,15 +66,17 @@ def switch_to_frame_by_xpath(driver, xpath, timeout=10):
         EC.frame_to_be_available_and_switch_to_it((By.XPATH, xpath))
     )
 
+def get_to_the_second_frame(driver, first_iframe_xpath=FIRST_IFRAME_XPATH, second_iframe_xpath=SECOND_IFRAME_XPATH):
+    switch_to_frame_by_xpath(driver, first_iframe_xpath)
+    switch_to_frame_by_xpath(driver, second_iframe_xpath)
+
 # TESTS #
 
 # 1. Text on the button is what is expected
 def test_text_on_the_button_is_what_is_expected(driver, expected_text='CLICK ME'):
     driver.switch_to.default_content()
 
-    switch_to_frame_by_xpath(driver, './/iframe[@src="iframe1.html"]')
-    
-    switch_to_frame_by_xpath(driver, './/iframe[@src="iframe2.html"]')
+    get_to_the_second_frame(driver)
 
     button_text = driver.find_element(By.TAG_NAME, 'a').text
 
@@ -83,9 +87,7 @@ def test_text_on_the_button_is_what_is_expected(driver, expected_text='CLICK ME'
 def test_button_is_visible_and_clickable(driver):
     driver.switch_to.default_content()
 
-    switch_to_frame_by_xpath(driver, './/iframe[@src="iframe1.html"]')
-    
-    switch_to_frame_by_xpath(driver, './/iframe[@src="iframe2.html"]')
+    get_to_the_second_frame(driver)
 
     button = driver.find_element(By.TAG_NAME, 'a')
 
@@ -98,9 +100,7 @@ def test_expected_text_is_appeared_after_clicking_the_button(driver):
 
     driver.switch_to.default_content()
 
-    switch_to_frame_by_xpath(driver, './/iframe[@src="iframe1.html"]')
-    
-    switch_to_frame_by_xpath(driver, './/iframe[@src="iframe2.html"]')
+    get_to_the_second_frame(driver)
 
     driver.find_element(By.TAG_NAME, 'a').click()
 
@@ -118,9 +118,7 @@ def test_no_duplicate_texts_are_shown_after_clicking_the_button(driver):
 
     driver.switch_to.default_content()
 
-    switch_to_frame_by_xpath(driver, './/iframe[@src="iframe1.html"]')
-    
-    switch_to_frame_by_xpath(driver, './/iframe[@src="iframe2.html"]')
+    get_to_the_second_frame(driver)
 
     driver.find_element(By.TAG_NAME, 'a').click()
 
@@ -150,7 +148,7 @@ def test_iframe_structure_does_not_change(driver):
 
     driver.switch_to.default_content()
 
-    # Check iframe1 is present in main page
+    # Check iframe1 is present in main pagae
     iframe1 = driver.find_element(By.XPATH, '//iframe[@src="iframe1.html"]')
     assert iframe1.is_displayed(), "iframe1 is not visible or present"
 
