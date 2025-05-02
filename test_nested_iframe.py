@@ -5,7 +5,6 @@
 
 # Goals:
 # Cover the functionality of the website
-# Use allure to practice beautiful reports
 
 # Test cases plan:
 # 1. Text on the button is what is expected
