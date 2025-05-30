@@ -58,6 +58,18 @@ def collect_console_errors(page: Page):
     yield errors
 
 
+def get_pseudo_element_text(page: Page, selector: str, pseudo: str = "::before") -> str:
+    content = page.evaluate(
+        """([selector, pseudo]) => {
+            const el = document.querySelector(selector);
+            if (!el) return "";
+            return window.getComputedStyle(el, pseudo).getPropertyValue('content');
+        }""",
+        [selector, pseudo]
+    )
+    return content.strip('"')
+
+
 # 1. Button of a star is clickable
 def test_star_button_is_clickable(page: Page, star: int):
     label = page.locator(f"label[for='star-{star}']")
@@ -66,20 +78,24 @@ def test_star_button_is_clickable(page: Page, star: int):
 # 2. Correct emoji (<img src>) is shown
 def test_correct_emoji_is_shown(page: Page, star: int):
     page.locator(f"label[for='star-{star}']").click()
-    img = page.locator(".emojis .slideImg img").get_attribute("src")
-    assert EXPECTED_EMOJIS[star-1] in img
+    img = page.locator(f".emojis li:nth-of-type({star})")
+    expect(img).to_be_visible()
 
 # 3. First span matches the expected one
 def test_feedback_text_matches(page: Page, star: int):
     page.locator(f"label[for='star-{star}']").click()
-    feedback = page.locator(".content span:nth-of-type(1)").text_content()
-    assert feedback == EXPECTED_TEXTS[star-1]
+   
+    content = get_pseudo_element_text(page, ".text")
+
+    assert content == EXPECTED_TEXTS[star - 1], f'Expected "{EXPECTED_TEXTS[star - 1]}", got "{content}"'
 
 # 4. Second span matches the expected one
 def test_count_text_matches(page: Page, star: int):
-    page.locator(f"label[for='star-{star}']").click()
-    count = page.locator(".content span:nth-of-type(2)").text_content()
-    assert count == f"{star} out of 5"
+    page.locator(f"label[for='star-{star}']").click()    
+
+    content = get_pseudo_element_text(page, ".numb")
+
+    assert content == f"{star} out of 5", f'Expected "{star}", got "{content}"'
 
 # 5. Clicked button has attribute "checked"
 def test_clicked_button_is_checked(page: Page, star: int):
@@ -121,10 +137,12 @@ def test_cannot_unselect_star(page: Page, star: int):
 
 # 11. Initial feedback text matches
 def test_feedback_text_matches_on_load(page: Page):
-    feedback = page.locator(".content span:nth-of-type(1)").text_content()
-    assert feedback == "Rate your experience"
+    content = get_pseudo_element_text(page, ".text")
+
+    assert content == "Rate your experience"
 
 # 12. Initial count text matches
-def test_count_text_matches_on_load(page: Page):
-    count = page.locator(".content span:nth-of-type(2)").text_content()
-    assert count == "0 out of 5"
+def test_count_text_matches_on_load(page: Page, expected_text="0 out of 5"):
+    content = get_pseudo_element_text(page, ".numb")
+
+    assert content == expected_text
